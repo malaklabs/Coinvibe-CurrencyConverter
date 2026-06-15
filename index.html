@@ -1,0 +1,907 @@
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="coinvibe.png">
+<link rel="apple-touch-icon" href="coinvibe.png">
+<title>CoinVibe · DZD Live Currency Converter</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            transition: background 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), color 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body.dark {
+            background-size: 200% 200%;
+            animation: bgFlow 12s ease infinite;
+            color: #E2E8F0;
+        }
+
+        body.light {
+            background-size: 200% 200%;
+            animation: bgFlowLight 12s ease infinite;
+            color: #0F172A;
+        }
+
+        @keyframes bgFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes bgFlowLight {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #vibe-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            display: block;
+        }
+
+        .converter-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1300px;
+            width: 100%;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            animation: fadeSlideUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body.dark .converter-container {
+            background: rgba(18, 25, 45, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        body.light .converter-container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            margin-bottom: 0.8rem;
+            font-size: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(115deg, rgba(255,255,255,0) 10%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 90%);
+            transform: rotate(25deg);
+            animation: shimmer 4s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            20% { transform: translateX(100%) rotate(25deg); }
+            100% { transform: translateX(100%) rotate(25deg); }
+        }
+
+        body.dark .badge {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+        body.light .badge {
+            background: rgba(139, 92, 246, 0.25);
+            border: 1px solid rgba(139, 92, 246, 0.6);
+        }
+
+        .badge i { font-size: 0.9rem; z-index: 2; }
+        body.dark .badge i { color: #FBBF24; }
+        body.light .badge i { color: #7C3AED; }
+
+        .badge span {
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #FDE68A, #F59E0B);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            z-index: 2;
+            font-size: 0.8rem;
+        }
+
+        body.light .badge span {
+            background: linear-gradient(135deg, #7C3AED, #C026D3);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFFFFF, #A5B4FC);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        body.light h1 {
+            background: linear-gradient(135deg, #4F46E5, #8B5CF6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .sub {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        body.dark .sub { color: #9CA3AF; }
+        body.light .sub { color: #475569; font-weight: 500; }
+
+        .live-tag {
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        body.dark .live-tag {
+            background: #10B98120;
+            color: #34D399;
+            border: 1px solid #34D39960;
+        }
+        body.light .live-tag {
+            background: #10B98120;
+            color: #059669;
+            border: 1px solid #10B98180;
+        }
+
+        .converter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .card-panel {
+            flex: 1;
+            min-width: 260px;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            transition: transform 0.6s ease-in-out, background 0.35s, box-shadow 0.35s;
+            transform-style: preserve-3d;
+            backface-visibility: visible;
+            animation: cardFloatIn 0.5s ease backwards;
+            animation-delay: 0.1s;
+        }
+
+        .card-panel.flip {
+            transform: rotateY(180deg);
+        }
+
+        .card-panel:nth-child(2) { animation-delay: 0.2s; }
+        .card-panel:last-child { animation-delay: 0.3s; }
+
+        @keyframes cardFloatIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        body.dark .card-panel {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        body.light .card-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .card-panel:hover {
+            transform: translateY(-5px);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid #8B5CF6;
+            padding-left: 10px;
+        }
+
+        .amount-input {
+            border-radius: 1.2rem;
+            padding: 0.7rem 1rem;
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        body.dark .amount-input {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #F1F5F9;
+        }
+        body.light .amount-input {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #0F172A;
+        }
+
+        .amount-input:focus {
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+            transform: scale(1.01);
+        }
+
+        .selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 1.5rem;
+            padding: 0.2rem 0.2rem 0.2rem 0.8rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+        }
+
+        body.dark .selector-wrapper {
+            background: #0F172A;
+            border: 1px solid #2D3A5E;
+        }
+        body.light .selector-wrapper {
+            background: #F8FAFC;
+            border: 1px solid #cbd5e1;
+        }
+
+        .selector-wrapper:focus-within {
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+            border-color: #8B5CF6;
+        }
+
+        select {
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            flex: 1;
+            padding: 0.5rem 0.2rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: 'Inter', monospace;
+            color: inherit;
+        }
+
+        select::-ms-expand {
+            display: none;
+        }
+
+        select:focus {
+            outline: none;
+        }
+
+        body.dark select { color: #FACC15; }
+        body.light select { color: #6D28D9; }
+
+        .currency-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .rate-info {
+            border-radius: 1rem;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            margin-top: 0.8rem;
+            font-weight: 500;
+        }
+
+        .result-area {
+            border-radius: 1.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-area::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #8B5CF6, #EC4899, #8B5CF6);
+            border-radius: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+        .result-area:hover::before {
+            opacity: 0.5;
+        }
+
+        body.dark .result-area {
+            background: linear-gradient(105deg, #0B1120, #0F172A);
+            border: 1px solid #8B5CF680;
+        }
+        body.light .result-area {
+            background: #fefce8;
+            border: 1px solid #8B5CF6;
+        }
+
+        .converted-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.2rem;
+        }
+        body.dark .converted-value { color: #E2E8F0; }
+        body.light .converted-value { color: #0F172A; }
+
+        .result-detail {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 0;
+        }
+
+        .target-currency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .swap-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+            margin: 0.5rem auto;
+            background: #8B5CF6;
+            color: white;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+        }
+        .swap-btn:hover {
+            transform: rotate(180deg) scale(1.05);
+            background: #7C3AED;
+        }
+
+        .footer-note {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.7rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        .social-links { display: flex; align-items: center; gap: 10px; }
+        .social-links a { color: rgba(139,92,246,0.7); font-size: 1rem; transition: color 0.2s, transform 0.2s; text-decoration: none; }
+        .social-links a:hover { color: #A855F7; transform: scale(1.2); }
+
+        .donate-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: linear-gradient(135deg, #0070ba, #003087);
+            color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em;
+            padding: 4px 10px; border-radius: 20px; text-decoration: none;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .donate-btn:hover { opacity: 0.85; transform: scale(1.05); }
+
+        .refresh-indicator {
+            padding: 3px 10px;
+            border-radius: 30px;
+            background: transparent;
+        }
+        .refresh-indicator i {
+            transition: transform 0.5s;
+        }
+        .refresh-indicator:hover i {
+            transform: rotate(360deg);
+        }
+
+        .eye-toggle {
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .eye-toggle:hover {
+            transform: scale(1.02);
+        }
+        .eye-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+        .eye {
+            width: 44px;
+            height: 44px;
+            background: var(--eye-white);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 
+                0 calc(var(--pixel-unit, 3px) * -1) 0 0 var(--eye-border),
+                0 var(--pixel-unit, 3px) 0 0 var(--eye-border),
+                calc(var(--pixel-unit, 3px) * -1) 0 0 0 var(--eye-border),
+                var(--pixel-unit, 3px) 0 0 0 var(--eye-border);
+            animation: blink 6s infinite;
+            transform-origin: center;
+        }
+        .eye:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+        .pupil {
+            width: 16px;
+            height: 16px;
+            background: var(--pupil-color);
+            position: absolute;
+            box-shadow: inset -2px 2px 0px rgba(255, 255, 255, 0.2);
+            will-change: transform;
+        }
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+
+        body.dark {
+            --eye-white: #1E293B;
+            --eye-border: #475569;
+            --pupil-color: #FDE047;
+            --pixel-unit: 3px;
+        }
+        body.light {
+            --eye-white: #ffffff;
+            --eye-border: #cbd5e1;
+            --pupil-color: #1F2937;
+            --pixel-unit: 3px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .loader-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #8B5CF6;
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .selected-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 780px) {
+            body { padding: 0.8rem; }
+            .converter-container { padding: 1rem; }
+            h1 { font-size: 1.6rem; }
+            .converted-value { font-size: 1.4rem; margin-bottom: 0.8rem; }
+            .badge { padding: 0.2rem 0.8rem; }
+            .badge span { font-size: 0.7rem; }
+            .card-panel { padding: 1rem; min-width: 240px; }
+            .panel-title { font-size: 1rem; }
+            .amount-input { font-size: 1rem; padding: 0.6rem 0.8rem; }
+            .eye { width: 36px; height: 36px; }
+            .pupil { width: 12px; height: 12px; }
+            .eye-wrapper { gap: 8px; }
+            .swap-btn { width: 40px; height: 40px; font-size: 1.1rem; }
+            .footer-note { flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; }
+            .target-currency-badge { padding: 4px 12px; font-size: 0.75rem; }
+        }
+
+        @media (max-width: 480px) {
+            .converter-grid { gap: 1rem; }
+            .card-panel { min-width: 100%; }
+        }
+    </style>
+</head>
+<body class="dark">
+    <canvas id="vibe-canvas"></canvas>
+    <div class="converter-container">
+        <div class="header-top">
+            <div class="badge">
+                <i class="fas fa-chart-line"></i>
+                <span>LIVE · USD · EUR · GBP · CAD → DZD</span>
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="eye-toggle" id="eyeToggle">
+                <div class="eye-wrapper">
+                    <div class="eye"><div class="pupil"></div></div>
+                    <div class="eye"><div class="pupil"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="header">
+            <h1><i class="fas fa-exchange-alt" style="font-size: 1.6rem; margin-right: 6px;"></i> CoinVibe</h1>
+            <div class="sub">
+                <span>real-time rates</span>
+                <span class="live-tag"><i class="fas fa-circle" style="font-size: 0.4rem; margin-right: 4px; color:#10B981;"></i> LIVE API</span>
+            </div>
+        </div>
+
+        <div class="converter-grid">
+            <div class="card-panel" id="fromCard" style="display:flex; flex-direction:column;">
+                <div class="panel-title"><i class="fas fa-arrow-up-from-bracket"></i> You send</div>
+                <div style="flex:1;"></div>
+                <input type="number" id="amountFrom" class="amount-input" value="100" step="any" placeholder="0.00">
+                <div class="selector-wrapper">
+                    <img id="fromCurrencyIcon" class="currency-icon" src="https://flagicons.lipis.dev/flags/4x3/us.svg" alt="icon">
+                    <select id="fromCurrency"></select>
+                </div>
+                <div class="rate-info" id="fromRateInfo">
+                    <i class="fas fa-info-circle"></i> 1 USD = ...
+                </div>
+                <div style="flex:1;"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+                <div class="swap-btn" id="swapButton" title="Toggle sell / buy rate">
+                    <i class="fas fa-tag" id="swapIcon"></i>
+                </div>
+                <span id="rateTypeLabel" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.7;">SELL</span>
+            </div>
+
+            <div class="card-panel" id="toCard">
+                <div class="panel-title"><i class="fas fa-arrow-down-to-bracket"></i> You receive <span style="font-size: 0.7rem; font-weight: 500; opacity: 0.6; margin-left: 4px;">(DZD · parallel market)</span></div>
+                <div class="result-area">
+                    <div class="small-label">converted amount</div>
+                    <div class="converted-value" id="convertedAmount">—</div>
+                    <div class="result-detail">
+                        <div class="target-currency-badge" id="targetCurrencyBadge">
+                            <img src="https://flagicons.lipis.dev/flags/4x3/dz.svg" class="selected-icon" alt="DZ">
+                            <span>DZD</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="selector-wrapper" style="cursor: default; pointer-events: none; opacity: 0.85; margin-top: 1rem;">
+                    <img src="https://flagicons.lipis.dev/flags/4x3/dz.svg" class="currency-icon" alt="Algeria">
+                    <span style="font-weight: 700; font-size: 0.9rem; flex: 1; color: #A855F7;">DZD · Algerian Dinar</span>
+                </div>
+                <div class="rate-info" id="toRateInfo">
+                    <i class="fas fa-charging-station"></i> waiting for rates...
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <div><i class="fas fa-database"></i> Live rates · Parallel market DZD</div>
+            <div class="social-links">
+                <a href="https://github.com/malaklabs" target="_blank" rel="noopener" title="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://www.instagram.com/malak_labs/" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://paypal.me/dutys1em" target="_blank" rel="noopener" class="donate-btn" id="donateBtn" title="Support via PayPal"><i class="fab fa-paypal"></i> Donate</a>
+            </div>
+            <div class="refresh-indicator"><i class="fas fa-sync-alt"></i> <span id="lastUpdate">Auto-refresh 60s</span></div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- VIBE COLOR MAPPING ----------
+        const vibeColors = {
+            USD: "#10B981", EUR: "#3B82F6", GBP: "#EF4444", CAD: "#EC4899"
+        };
+        let currentVibeColor = "#8B5CF6";
+        function updateVibeColor(currency) {
+            currentVibeColor = vibeColors[currency] || "#8B5CF6";
+            const isDark = document.body.classList.contains('dark');
+            if (isDark) {
+                document.body.style.background = `linear-gradient(145deg, #0B1120, ${currentVibeColor}40, #0a0f1c)`;
+                document.body.style.backgroundSize = "200% 200%";
+                document.body.style.animation = "bgFlow 12s ease infinite";
+            } else {
+                document.body.style.background = `linear-gradient(145deg, #f0f4ff, ${currentVibeColor}30, #ffffff)`;
+                document.body.style.backgroundSize = "200% 200%";
+                document.body.style.animation = "bgFlowLight 12s ease infinite";
+            }
+        }
+
+        // ---------- CANVAS BACKGROUND ----------
+        const canvas = document.getElementById('vibe-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const symbols = ['$', '€', '£', '₿', '¥', '₽', '₹', '₩', '₴', '₦'];
+        const mouse = { x: null, y: null, radius: 180 };
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initParticles(); }
+        window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.baseX = x; this.baseY = y;
+                this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                this.size = Math.random() * 20 + 12;
+                this.density = (Math.random() * 25) + 5;
+            }
+            draw() { ctx.fillStyle = currentVibeColor + "40"; ctx.font = `${this.size}px "Inter", "Courier New", monospace`; ctx.fillText(this.symbol, this.x, this.y); }
+            update() {
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = mouse.x - this.x, dy = mouse.y - this.y, distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < mouse.radius) {
+                        let forceDirectionX = dx / distance, forceDirectionY = dy / distance;
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        this.x -= forceDirectionX * force * this.density;
+                        this.y -= forceDirectionY * force * this.density;
+                    } else {
+                        if (this.x !== this.baseX) this.x -= (this.x - this.baseX) / 12;
+                        if (this.y !== this.baseY) this.y -= (this.y - this.baseY) / 12;
+                    }
+                }
+            }
+        }
+        function initParticles() {
+            particles = [];
+            const cols = Math.ceil(canvas.width / 70), rows = Math.ceil(canvas.height / 70);
+            for (let i = 0; i < cols * rows; i++) {
+                let x = (i % cols) * 70 + 35, y = Math.floor(i / cols) * 70 + 35;
+                if (x < canvas.width && y < canvas.height) particles.push(new Particle(x, y));
+            }
+            for (let i = 0; i < 60; i++) particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
+        }
+        function animateCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animateCanvas); }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateCanvas();
+
+        // ---------- CURRENCY & CRYPTO CONFIG ----------
+        const FIAT_CURRENCIES = ["USD", "EUR", "GBP", "CAD"];
+
+        const ALL_CURRENCIES = [...FIAT_CURRENCIES];
+        const CURRENCY_NAMES = { USD: "US Dollar", EUR: "Euro", GBP: "British Pound", CAD: "Canadian Dollar" };
+        const FLAG_CODES = { USD: "us", EUR: "eu", GBP: "gb", CAD: "ca" };
+        function getCurrencyIconUrl(currency) {
+            return `https://flagicons.lipis.dev/flags/4x3/${FLAG_CODES[currency] || "us"}.svg`;
+        }
+        let fiatRates = { USD: 1 }, updateTimer = null;
+        const DZD_FALLBACK = {
+            USD: { buy: 239, sell: 237 }, EUR: { buy: 279, sell: 277 },
+            GBP: { buy: 315, sell: 311 }, CAD: { buy: 172, sell: 170 }
+        };
+        const DZD_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?url=',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+        let parallelDZDRates = JSON.parse(JSON.stringify(DZD_FALLBACK));
+
+        let rateType = 'sell'; // 'sell' = you sell foreign → receive DZD | 'buy' = you spend DZD → receive foreign
+        const fromSelect = document.getElementById('fromCurrency');
+        const amountFromInput = document.getElementById('amountFrom'), convertedSpan = document.getElementById('convertedAmount');
+        const fromRateInfoSpan = document.getElementById('fromRateInfo'), toRateInfoSpan = document.getElementById('toRateInfo');
+        const fromCurrencyIcon = document.getElementById('fromCurrencyIcon');
+        const swapBtn = document.getElementById('swapButton'), eyeToggle = document.getElementById('eyeToggle');
+
+        function toggleRateType() {
+            rateType = rateType === 'sell' ? 'buy' : 'sell';
+            const label = document.getElementById('rateTypeLabel');
+            const icon  = document.getElementById('swapIcon');
+            if (rateType === 'sell') {
+                label.textContent = 'SELL';
+                label.style.color = '#10B981';
+                icon.className = 'fas fa-tag';
+                document.getElementById('swapButton').style.background = '#8B5CF6';
+            } else {
+                label.textContent = 'BUY';
+                label.style.color = '#F59E0B';
+                icon.className = 'fas fa-cart-shopping';
+                document.getElementById('swapButton').style.background = '#D97706';
+            }
+            updateConversion();
+        }
+
+        function initEyeTracker() {
+            const eyes = document.querySelectorAll('.eye'), pupils = document.querySelectorAll('.pupil');
+            let eyeCenters = [];
+            function updateCenters() { eyeCenters = Array.from(eyes).map(eye => { const rect = eye.getBoundingClientRect(); return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; }); }
+            updateCenters();
+            window.addEventListener('resize', updateCenters);
+            window.addEventListener('mousemove', (e) => { pupils.forEach((pupil, i) => { const center = eyeCenters[i]; if (!center) return; const dx = e.clientX - center.x, dy = e.clientY - center.y, angle = Math.atan2(dy, dx), maxDistance = 12; pupil.style.transform = `translate(${Math.cos(angle) * maxDistance}px, ${Math.sin(angle) * maxDistance}px)`; }); });
+        }
+        function initDarkModeWithEyes() {
+            const savedTheme = localStorage.getItem('coinvibe-theme');
+            if (savedTheme === 'light') { document.body.classList.remove('dark'); document.body.classList.add('light'); } 
+            else { document.body.classList.add('dark'); document.body.classList.remove('light'); }
+            updateVibeColor(fromSelect.value);
+            eyeToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (document.body.classList.contains('dark')) { document.body.classList.remove('dark'); document.body.classList.add('light'); localStorage.setItem('coinvibe-theme', 'light'); } 
+                else { document.body.classList.remove('light'); document.body.classList.add('dark'); localStorage.setItem('coinvibe-theme', 'dark'); }
+                updateVibeColor(fromSelect.value);
+            });
+        }
+        function updateCurrencyIcons() {
+            fromCurrencyIcon.src = getCurrencyIconUrl(fromSelect.value);
+        }
+        function populateDropdowns() {
+            ALL_CURRENCIES.forEach(curr => {
+                let opt = document.createElement('option');
+                opt.value = curr;
+                opt.textContent = `${curr}   —   ${CURRENCY_NAMES[curr] || curr}`;
+                fromSelect.appendChild(opt);
+            });
+            fromSelect.value = "EUR";
+            updateCurrencyIcons(); updateConversion(); updateVibeColor(fromSelect.value);
+        }
+        async function fetchFiatRates() {
+            try { const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD'); if (!res.ok) throw new Error(); const data = await res.json(); if (data && data.rates) { for (let [curr, rate] of Object.entries(data.rates)) if (FIAT_CURRENCIES.includes(curr)) fiatRates[curr] = rate; fiatRates.USD = 1; } } catch { fiatRates = { USD:1, EUR:0.92, GBP:0.79, CAD:1.36 }; }
+        }
+        function parseDZDRatesFromHTML(html) {
+            const text = html
+                .replace(/<script[\s\S]*?<\/script>/gi, '')
+                .replace(/<style[\s\S]*?<\/style>/gi, '')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ');
+            const defs = [
+                { key: 'EUR', re: /euro[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)/i, min: 200, max: 400 },
+                { key: 'USD', re: /us\s*dollar[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)/i, min: 150, max: 350 },
+                { key: 'GBP', re: /pound[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)/i, min: 250, max: 500 },
+                { key: 'CAD', re: /canadian[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)[^0-9]{0,80}?(\d{2,3}(?:\.\d+)?)/i, min: 100, max: 250 },
+            ];
+            const out = {};
+            for (const { key, re, min, max } of defs) {
+                const m = text.match(re);
+                if (m) {
+                    const v1 = parseFloat(m[1]), v2 = parseFloat(m[2]);
+                    if (v1 >= min && v1 <= max && v2 >= min && v2 <= max)
+                        out[key] = { buy: Math.max(v1, v2), sell: Math.min(v1, v2) };
+                }
+            }
+            return Object.keys(out).length >= 2 ? out : null;
+        }
+        async function fetchDZDParallelRates() {
+            for (const proxy of DZD_PROXIES) {
+                try {
+                    const res = await fetch(proxy + encodeURIComponent('https://devisesquare.com/'), { signal: AbortSignal.timeout(5000) });
+                    if (!res.ok) continue;
+                    const parsed = parseDZDRatesFromHTML(await res.text());
+                    if (parsed) {
+                        parallelDZDRates = { ...JSON.parse(JSON.stringify(DZD_FALLBACK)), ...parsed };
+                        return;
+                    }
+                } catch { /* try next */ }
+            }
+            parallelDZDRates = JSON.parse(JSON.stringify(DZD_FALLBACK));
+        }
+        function getDZDRate(foreignCurr, type) {
+            const t = type || rateType;
+            const rates = parallelDZDRates[foreignCurr];
+            if (rates) return t === 'buy' ? rates.buy : rates.sell;
+            const usdDZD = (parallelDZDRates['USD']?.[t] || (t === 'buy' ? 239 : 237));
+            return (1 / (fiatRates[foreignCurr] || 1)) * usdDZD;
+        }
+
+        function updateConversion() {
+            let amount = parseFloat(amountFromInput.value); if (isNaN(amount)) amount = 0;
+            const fromCurr = fromSelect.value;
+            const activeRate = getDZDRate(fromCurr);
+            const result = amount * activeRate;
+            convertedSpan.innerHTML = `${result.toFixed(2)} <span style="font-size:0.9rem; font-weight:500;">DZD</span>`;
+            const sellRate = getDZDRate(fromCurr, 'sell');
+            const buyRate  = getDZDRate(fromCurr, 'buy');
+            const rateLabel = rateType === 'sell'
+                ? `<span style="color:#10B981;">Sell: 1 ${fromCurr} = ${sellRate.toFixed(2)} DZD</span> &nbsp;|&nbsp; <span style="color:#F59E0B;">Buy: 1 ${fromCurr} = ${buyRate.toFixed(2)} DZD</span>`
+                : `<span style="color:#F59E0B;">Buy: 1 ${fromCurr} = ${buyRate.toFixed(2)} DZD</span> &nbsp;|&nbsp; <span style="color:#10B981;">Sell: 1 ${fromCurr} = ${sellRate.toFixed(2)} DZD</span>`;
+            fromRateInfoSpan.innerHTML = `<i class="fas fa-chart-simple"></i> ${rateLabel}`;
+            toRateInfoSpan.innerHTML = `<i class="fas fa-coins"></i> ${rateType === 'sell' ? 'Market buys your' : 'Market sells'} ${fromCurr} at ${(rateType === 'sell' ? sellRate : buyRate).toFixed(2)} DZD`;
+            updateCurrencyIcons();
+        }
+        async function refreshAllRates() {
+            convertedSpan.innerHTML = '<span class="loader-dot"></span>';
+            try { await Promise.all([fetchFiatRates(), fetchDZDParallelRates()]); updateConversion(); document.getElementById('lastUpdate').innerHTML = `updated ${new Date().toLocaleTimeString()}`; }
+            catch { convertedSpan.innerHTML = '⚠️ error'; }
+        }
+        function initEventListeners() {
+            amountFromInput.addEventListener('input', updateConversion);
+            fromSelect.addEventListener('change', () => { updateConversion(); updateCurrencyIcons(); updateVibeColor(fromSelect.value); });
+            swapBtn.addEventListener('click', toggleRateType);
+        }
+        async function init() { populateDropdowns(); initEventListeners(); initDarkModeWithEyes(); initEyeTracker(); await refreshAllRates(); if (updateTimer) clearInterval(updateTimer); updateTimer = setInterval(refreshAllRates, 60000); }
+        init();
+    </script>
+</body>
+</html>
