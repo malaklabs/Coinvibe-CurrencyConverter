@@ -18,7 +18,7 @@
 
 ## Live Demo
 
-[coinvibe on GitHub Pages](https://malaklabs.github.io/Coinvibe-CurrencyConverter_webapp/)
+[coinvibe on GitHub Pages](https://malaklabs.github.io/Coinvibe-CurrencyConverter/)
 
 ## Tech Stack
 
